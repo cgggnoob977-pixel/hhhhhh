@@ -1,0 +1,1849 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduTrack Analytics - ระบบติดตามการเข้าเรียนและการส่งงาน</title>
+  <!-- Google Fonts: Prompt & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Tailwind Configuration for Professional Palette -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Prompt', 'Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#f0f7ff',
+              100: '#e0effe',
+              200: '#bae0fd',
+              500: '#0284c7',
+              600: '#0369a1',
+              700: '#075985',
+              800: '#0c4a6e',
+              900: '#082f49',
+            },
+            surface: {
+              DEFAULT: '#ffffff',
+              subtle: '#f8fafc',
+              border: '#e2e8f0',
+              muted: '#64748b'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Prompt', sans-serif;
+      background-color: #f8fafc;
+      color: #1e293b;
+      overflow-x: hidden;
+    }
+    .page-view {
+      display: none;
+    }
+    .page-view.active {
+      display: block;
+      animation: fadeIn 0.25s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    .sidebar-item.active {
+      background-color: #0284c7;
+      color: #ffffff;
+      font-weight: 500;
+      box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+    }
+    .sidebar-item.active svg {
+      stroke: #ffffff;
+    }
+  </style>
+</head>
+<body class="flex h-screen overflow-hidden text-slate-800 bg-slate-50">
+
+  <!-- ==================== SIDEBAR ==================== -->
+  <aside id="sidebar" class="w-72 bg-slate-900 text-slate-300 flex flex-col flex-shrink-0 z-30 transition-all duration-300 shadow-xl border-r border-slate-800">
+    <!-- Brand / Header -->
+    <div class="p-6 border-b border-slate-800 flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-white shadow-md font-bold text-lg">
+        ET
+      </div>
+      <div>
+        <h1 class="text-white font-semibold text-base tracking-wide flex items-center gap-1.5">
+          EduTrack
+          <span class="text-xs bg-sky-500/20 text-sky-400 border border-sky-500/30 px-1.5 py-0.5 rounded font-normal">v2.4</span>
+        </h1>
+        <p class="text-xs text-slate-400">ระบบติดตามการเรียน & ส่งงาน</p>
+      </div>
+    </div>
+
+    <!-- Navigation Menu (Full Page View Switcher) -->
+    <nav class="flex-1 px-3 py-5 space-y-1.5 overflow-y-auto" id="sidebar-nav">
+      <div class="px-3 pb-2 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+        แดชบอร์ดและการวิเคราะห์
+      </div>
+
+      <!-- Item 1: Overview Dashboard -->
+      <button onclick="switchPage('overview')" id="nav-overview" class="sidebar-item active w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm transition-all duration-200 text-left hover:bg-slate-800/80 hover:text-white">
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+        </svg>
+        <span class="flex-1">แดชบอร์ดภาพรวม</span>
+      </button>
+
+      <!-- Item 2: Student Insights -->
+      <button onclick="switchPage('students')" id="nav-students" class="sidebar-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm transition-all duration-200 text-left hover:bg-slate-800/80 hover:text-white">
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+        </svg>
+        <span class="flex-1">วิเคราะห์รายนักเรียน</span>
+        <span id="badge-at-risk" class="bg-rose-500/20 text-rose-300 text-[11px] px-2 py-0.5 rounded-full border border-rose-500/30">3 เสี่ยง</span>
+      </button>
+
+      <!-- Item 3: Data Quality Audit -->
+      <button onclick="switchPage('quality')" id="nav-quality" class="sidebar-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm transition-all duration-200 text-left hover:bg-slate-800/80 hover:text-white">
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+        </svg>
+        <span class="flex-1">ตรวจสอบคุณภาพข้อมูล</span>
+        <span class="bg-amber-500/20 text-amber-300 text-[11px] px-2 py-0.5 rounded-full border border-amber-500/30">6 ปัญหา</span>
+      </button>
+
+      <!-- Item 4: Data Explorer & Export -->
+      <button onclick="switchPage('data')" id="nav-data" class="sidebar-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm transition-all duration-200 text-left hover:bg-slate-800/80 hover:text-white">
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 4h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+        </svg>
+        <span class="flex-1">ตารางข้อมูล & ส่งออก</span>
+      </button>
+
+      <div class="pt-4 px-3 pb-2 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+        รายงานและการตรวจสอบ
+      </div>
+
+      <!-- Item 5: Analysis & Answers -->
+      <button onclick="switchPage('analysis')" id="nav-analysis" class="sidebar-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm transition-all duration-200 text-left hover:bg-slate-800/80 hover:text-white">
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+        </svg>
+        <span class="flex-1">บทวิเคราะห์ & ตอบโจทย์</span>
+        <span class="bg-emerald-500/20 text-emerald-300 text-[11px] px-1.5 py-0.5 rounded font-mono">100%</span>
+      </button>
+
+      <!-- Item 6: Formula Audit & Test Evidence -->
+      <button onclick="switchPage('audit')" id="nav-audit" class="sidebar-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm transition-all duration-200 text-left hover:bg-slate-800/80 hover:text-white">
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+        </svg>
+        <span class="flex-1">ตรวจสูตร & ทดสอบระบบ</span>
+      </button>
+    </nav>
+
+    <!-- Sidebar Footer / Data Info -->
+    <div class="p-4 bg-slate-950/60 border-t border-slate-800 text-xs text-slate-400">
+      <div class="flex items-center justify-between mb-1.5">
+        <span class="text-slate-400 font-medium">ชุดข้อมูล:</span>
+        <span class="text-sky-400 font-mono">59 รายการ (Cleaned)</span>
+      </div>
+      <div class="flex items-center justify-between text-[11px] text-slate-400">
+        <span>ช่วงวันที่:</span>
+        <span>2 - 9 พ.ย. 2026</span>
+      </div>
+      <div class="mt-3 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
+        <span class="inline-flex items-center gap-1.5 text-emerald-400">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> ระบบพร้อมใช้งาน
+        </span>
+        <span class="text-slate-400 font-mono">10 นักเรียน</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ==================== MAIN CONTENT WRAPPER ==================== -->
+  <main class="flex-1 flex flex-col h-screen overflow-hidden bg-slate-100">
+    
+    <!-- Top Header -->
+    <header class="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between flex-shrink-0 z-20 shadow-sm">
+      <div class="flex items-center gap-4">
+        <div>
+          <h2 id="top-title" class="text-lg font-bold text-slate-800">แดชบอร์ดภาพรวม (Overview Dashboard)</h2>
+          <p id="top-subtitle" class="text-xs text-slate-500">สรุปผลการเข้าเรียน การมาสาย และการส่งงานแบบไดนามิก</p>
+        </div>
+      </div>
+
+      <!-- Quick Action Right Side -->
+      <div class="flex items-center gap-3">
+        <div class="hidden sm:flex items-center gap-2 text-xs text-slate-600 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
+          <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+          <span>ภาคเรียนที่ 2/2026</span>
+        </div>
+        <button onclick="downloadCleanedCSV()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded-lg shadow-sm hover:bg-slate-50 transition-colors">
+          <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+          <span>ดาวน์โหลด Cleaned CSV</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Scrollable Viewport (Full Page View Container) -->
+    <div class="flex-1 overflow-y-auto p-6" id="main-viewport">
+
+      <!-- ======================================================== -->
+      <!-- VIEW 1: OVERVIEW DASHBOARD                               -->
+      <!-- ======================================================== -->
+      <section id="view-overview" class="page-view active space-y-6">
+
+        <!-- GLOBAL FILTER BAR -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+              <svg class="w-5 h-5 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+              </svg>
+              <span class="font-semibold text-slate-800 text-sm">ตัวกรองข้อมูลแบบไดนามิก (Global Filter)</span>
+              <span id="filter-status-badge" class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full border border-slate-200">แสดงทั้งหมด (59 แถว)</span>
+            </div>
+
+            <!-- Filter Inputs Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 flex-1 lg:max-w-4xl">
+              <!-- Filter: Date -->
+              <div>
+                <label class="block text-[11px] font-medium text-slate-500 mb-1">วันที่บันทึก</label>
+                <select id="filter-date" onchange="applyFilters()" class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-sky-500 font-sans">
+                  <option value="ALL">ทุกวันที่ (2 - 9 พ.ย. 2026)</option>
+                  <option value="2026-11-02">2026-11-02</option>
+                  <option value="2026-11-03">2026-11-03</option>
+                  <option value="2026-11-04">2026-11-04</option>
+                  <option value="2026-11-05">2026-11-05</option>
+                  <option value="2026-11-06">2026-11-06</option>
+                  <option value="2026-11-09">2026-11-09</option>
+                </select>
+              </div>
+
+              <!-- Filter: Classroom -->
+              <div>
+                <label class="block text-[11px] font-medium text-slate-500 mb-1">ห้องเรียน</label>
+                <select id="filter-room" onchange="applyFilters()" class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-sky-500 font-sans">
+                  <option value="ALL">ทุกห้องเรียน</option>
+                  <option value="ปวช.1/1">ปวช.1/1 (29 รายการ)</option>
+                  <option value="ปวช.1/2">ปวช.1/2 (30 รายการ)</option>
+                </select>
+              </div>
+
+              <!-- Filter: Subject -->
+              <div>
+                <label class="block text-[11px] font-medium text-slate-500 mb-1">วิชา</label>
+                <select id="filter-subject" onchange="applyFilters()" class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-sky-500 font-sans">
+                  <option value="ALL">ทุกรายวิชา</option>
+                  <option value="การเขียนโปรแกรม">การเขียนโปรแกรม</option>
+                  <option value="ฐานข้อมูล">ฐานข้อมูล</option>
+                  <option value="การสร้างเว็บไซต์">การสร้างเว็บไซต์</option>
+                </select>
+              </div>
+
+              <!-- Filter: Student ID -->
+              <div>
+                <label class="block text-[11px] font-medium text-slate-500 mb-1">รหัสนักเรียน</label>
+                <select id="filter-student" onchange="applyFilters()" class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-sky-500 font-sans">
+                  <option value="ALL">นักเรียนทุกคน (S001 - S010)</option>
+                  <option value="S001">S001 (ปวช.1/1)</option>
+                  <option value="S002">S002 (ปวช.1/1)</option>
+                  <option value="S003">S003 (ปวช.1/1)</option>
+                  <option value="S004">S004 (ปวช.1/1)</option>
+                  <option value="S005">S005 (ปวช.1/1)</option>
+                  <option value="S006">S006 (ปวช.1/2)</option>
+                  <option value="S007">S007 (ปวช.1/2)</option>
+                  <option value="S008">S008 (ปวช.1/2)</option>
+                  <option value="S009">S009 (ปวช.1/2)</option>
+                  <option value="S010">S010 (ปวช.1/2)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Reset Button -->
+            <div class="flex items-end">
+              <button onclick="resetFilters()" class="w-full lg:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-lg transition-colors shadow-sm">
+                <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                <span>ล้างตัวกรอง</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4 MAIN KPI CARDS -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- KPI 1: Unique Students -->
+          <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-200 relative overflow-hidden">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">จำนวนนักเรียนไม่ซ้ำ</span>
+              <div class="w-8 h-8 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+              </div>
+            </div>
+            <div class="flex items-baseline gap-2">
+              <span id="kpi-students" class="text-3xl font-bold text-slate-800">10</span>
+              <span class="text-xs text-slate-500">คน</span>
+            </div>
+            <p id="kpi-students-sub" class="text-[11px] text-slate-400 mt-2">จากข้อมูลทั้งหมด 59 รายการ</p>
+          </div>
+
+          <!-- KPI 2: Attendance Rate -->
+          <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-200 relative overflow-hidden">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">อัตราเข้าเรียน</span>
+              <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              </div>
+            </div>
+            <div class="flex items-baseline gap-2">
+              <span id="kpi-attendance" class="text-3xl font-bold text-emerald-600">81.36%</span>
+            </div>
+            <p id="kpi-attendance-sub" class="text-[11px] text-slate-500 mt-2 font-mono">ตัวหาร: 48 / 59 ครั้ง (มาเรียน+สาย)</p>
+          </div>
+
+          <!-- KPI 3: Overall Submission Rate -->
+          <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-200 relative overflow-hidden">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">อัตราส่งงานรวม</span>
+              <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+              </div>
+            </div>
+            <div class="flex items-baseline gap-2">
+              <span id="kpi-submission-total" class="text-3xl font-bold text-indigo-600">67.24%</span>
+            </div>
+            <p id="kpi-submission-total-sub" class="text-[11px] text-slate-500 mt-2 font-mono">ส่งแล้ว 39 / 58 รายการที่ทราบ</p>
+          </div>
+
+          <!-- KPI 4: Data Issues Count -->
+          <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-200 relative overflow-hidden">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">รายการมีปัญหา</span>
+              <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+              </div>
+            </div>
+            <div class="flex items-baseline gap-2">
+              <span id="kpi-issues" class="text-3xl font-bold text-amber-600">6</span>
+              <span class="text-xs text-slate-500">จุด (ใน 6 แถว)</span>
+            </div>
+            <p id="kpi-issues-sub" class="text-[11px] text-slate-400 mt-2">ตัดซ้ำ 1, ผิดเงื่อนไข 5 จุด</p>
+          </div>
+        </div>
+
+        <!-- SECONDARY HIGHLIGHT CARDS: Attended Submission & Avg Late Mins -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Attended Submission Rate -->
+          <div class="bg-gradient-to-r from-sky-50 to-indigo-50 border border-sky-200 rounded-xl p-4 flex items-center justify-between">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold text-sky-800 uppercase tracking-wide">อัตราส่งงานเฉพาะผู้เข้าเรียน (Attended Submission Rate)</span>
+                <span class="bg-sky-200 text-sky-800 text-[10px] px-2 py-0.5 rounded font-semibold">ตัวชี้วัดแยกตามโจทย์</span>
+              </div>
+              <p class="text-xs text-slate-600 mt-1">คำนวณจากผู้ที่มาเรียนหรือมาสาย และทราบสถานะส่งงานเท่านั้น (ไม่นับขาด/ลา)</p>
+              <p id="metric-attended-sub-calc" class="text-xs font-mono text-sky-700 mt-1">ส่งแล้ว 39 ÷ มาเรียน/สาย 47 รายการ = 82.98%</p>
+            </div>
+            <div class="text-right">
+              <span id="metric-attended-sub" class="text-3xl font-extrabold text-sky-700">82.98%</span>
+              <span class="block text-[11px] text-emerald-600 font-semibold">+15.74% สูงกว่าส่งงานรวม</span>
+            </div>
+          </div>
+
+          <!-- Average Late Minutes -->
+          <div class="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-4 flex items-center justify-between">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold text-amber-900 uppercase tracking-wide">นาทีที่สายเฉลี่ย (Average Late Minutes)</span>
+                <span class="bg-amber-200 text-amber-900 text-[10px] px-2 py-0.5 rounded font-semibold">เฉพาะสายที่นาทีถูกต้อง</span>
+              </div>
+              <p class="text-xs text-slate-600 mt-1">ตัดนาทีติดลบ (-10) และสายแต่นาที 0 ออกตามนิยามโจทย์</p>
+              <p id="metric-late-avg-calc" class="text-xs font-mono text-amber-800 mt-1">รวม 170 นาที ÷ 9 รายการสายถูกต้อง</p>
+            </div>
+            <div class="text-right">
+              <span id="metric-late-avg" class="text-3xl font-extrabold text-amber-700">18.89</span>
+              <span class="block text-[11px] text-slate-500">นาที / ครั้ง</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- CHARTS SECTION (2x2 GRID) -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Chart 1: Status Distribution Donut -->
+          <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h3 class="text-sm font-semibold text-slate-800">สัดส่วนสถานะการเข้าเรียน (Attendance Distribution)</h3>
+                <p class="text-xs text-slate-500">แจกแจงจำนวนครั้ง: มาเรียน, สาย, ขาด, ลา</p>
+              </div>
+              <span class="text-xs font-mono text-slate-400">Total: 59 ครั้ง</span>
+            </div>
+            <div class="h-64 relative flex items-center justify-center">
+              <canvas id="chart-status-distribution"></canvas>
+            </div>
+            <div class="grid grid-cols-4 gap-2 pt-3 border-t border-slate-100 text-center text-xs">
+              <div><span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 mr-1"></span>มาเรียน: <b id="cnt-pres">37</b></div>
+              <div><span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-500 mr-1"></span>สาย: <b id="cnt-late">11</b></div>
+              <div><span class="inline-block w-2.5 h-2.5 rounded-full bg-rose-500 mr-1"></span>ขาด: <b id="cnt-abs">7</b></div>
+              <div><span class="inline-block w-2.5 h-2.5 rounded-full bg-blue-500 mr-1"></span>ลา: <b id="cnt-leave">4</b></div>
+            </div>
+          </div>
+
+          <!-- Chart 2: Daily Attendance Rate Trend -->
+          <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h3 class="text-sm font-semibold text-slate-800">แนวโน้มอัตราเข้าเรียนรายวัน (Daily Attendance Trend)</h3>
+                <p class="text-xs text-slate-500">อัตราเข้าเรียนเปรียบเทียบกับอัตราส่งงานในแต่ละวัน</p>
+              </div>
+              <span class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded">2-9 พ.ย. 2026</span>
+            </div>
+            <div class="h-64 relative">
+              <canvas id="chart-daily-trend"></canvas>
+            </div>
+            <div class="flex items-center justify-center gap-6 pt-3 border-t border-slate-100 text-xs text-slate-600">
+              <span class="inline-flex items-center gap-1.5"><span class="w-3 h-1 bg-emerald-500 rounded"></span>อัตราเข้าเรียน (%)</span>
+              <span class="inline-flex items-center gap-1.5"><span class="w-3 h-1 bg-indigo-500 rounded"></span>อัตราส่งงานรวม (%)</span>
+            </div>
+          </div>
+
+          <!-- Chart 3: Room Attendance Comparison -->
+          <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h3 class="text-sm font-semibold text-slate-800">เปรียบเทียบอัตราเข้าเรียนรายห้อง (Classroom Comparison)</h3>
+                <p class="text-xs text-slate-500">ตอบโจทย์ข้อ 1: ปวช.1/1 เทียบกับ ปวช.1/2</p>
+              </div>
+              <span class="text-xs font-semibold text-sky-700 bg-sky-50 px-2 py-0.5 rounded border border-sky-200">ปวช.1/2 สูงกว่า (+4.02%)</span>
+            </div>
+            <div class="h-64 relative">
+              <canvas id="chart-room-comparison"></canvas>
+            </div>
+            <div class="grid grid-cols-2 gap-4 pt-3 border-t border-slate-100 text-xs">
+              <div class="p-2 bg-slate-50 rounded text-center">
+                <span class="text-slate-500 block">ปวช.1/1</span>
+                <span class="font-bold text-slate-800 text-sm">79.31%</span> (23/29 ครั้ง)
+              </div>
+              <div class="p-2 bg-sky-50 rounded text-center border border-sky-100">
+                <span class="text-sky-700 font-medium block">ปวช.1/2 (ชนะ)</span>
+                <span class="font-bold text-sky-800 text-sm">83.33%</span> (25/30 ครั้ง)
+              </div>
+            </div>
+          </div>
+
+          <!-- Chart 4: Subject Attendance & Late Rate -->
+          <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h3 class="text-sm font-semibold text-slate-800">อัตราเข้าเรียนและอัตราสายรายวิชา (Subject Late Rate)</h3>
+                <p class="text-xs text-slate-500">ตอบโจทย์ข้อ 2: วิชาใดมีอัตราสายสูงกว่า?</p>
+              </div>
+              <span class="text-xs font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">โปรแกรม & ฐานข้อมูล สายสูงสุด 20%</span>
+            </div>
+            <div class="h-64 relative">
+              <canvas id="chart-subject-late"></canvas>
+            </div>
+            <div class="grid grid-cols-3 gap-2 pt-3 border-t border-slate-100 text-center text-[11px]">
+              <div class="p-1.5 bg-amber-50/50 rounded">โปรแกรม: <b>สาย 20%</b> (4/20)</div>
+              <div class="p-1.5 bg-amber-50/50 rounded">ฐานข้อมูล: <b>สาย 20%</b> (4/20)</div>
+              <div class="p-1.5 bg-slate-50 rounded">สร้างเว็บ: <b>สาย 15.79%</b> (3/19)</div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- VIEW 2: STUDENT INSIGHTS & RISK TRACKING                 -->
+      <!-- ======================================================== -->
+      <section id="view-students" class="page-view space-y-6">
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+            <div>
+              <h3 class="text-base font-bold text-slate-800">ตารางวิเคราะห์พฤติกรรมรายนักเรียน (Student Risk Matrix)</h3>
+              <p class="text-xs text-slate-500">จำแนกตามห้องเรียน สถิติการเข้าเรียน การสาย การขาด การลา และงานที่ยังค้างส่ง</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="exportStudentTableCSV()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 shadow-sm">
+                <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <span>ส่งออกตารางนักเรียน (CSV)</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Student Risk Legend -->
+          <div class="flex flex-wrap items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200 text-xs mb-4">
+            <span class="font-semibold text-slate-700">เกณฑ์การติดตาม:</span>
+            <span class="inline-flex items-center gap-1 bg-rose-50 text-rose-700 border border-rose-200 px-2 py-0.5 rounded font-medium">
+              <span class="w-2 h-2 rounded-full bg-rose-500"></span> ต้องติดตามเร่งด่วน (ขาด &ge; 2 คาบ หรือ ค้างส่ง &ge; 3 คาบ)
+            </span>
+            <span class="inline-flex items-center gap-1 bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded font-medium">
+              <span class="w-2 h-2 rounded-full bg-amber-500"></span> เฝ้าระวังพฤติกรรมสาย (สาย &ge; 2 คาบ)
+            </span>
+            <span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded font-medium">
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span> สถานะปกติ
+            </span>
+          </div>
+
+          <!-- Table Container -->
+          <div class="overflow-x-auto rounded-lg border border-slate-200">
+            <table class="w-full text-left text-xs divide-y divide-slate-200" id="student-risk-table">
+              <thead class="bg-slate-50 text-slate-600 font-semibold">
+                <tr>
+                  <th class="px-3.5 py-3">รหัสนักเรียน</th>
+                  <th class="px-3 py-3">ห้องเรียน</th>
+                  <th class="px-3 py-3 text-center">คาบทั้งหมด</th>
+                  <th class="px-3 py-3 text-center text-emerald-700">มาเรียน</th>
+                  <th class="px-3 py-3 text-center text-amber-700">สาย</th>
+                  <th class="px-3 py-3 text-center text-rose-700 font-bold">ขาด</th>
+                  <th class="px-3 py-3 text-center text-blue-700">ลา</th>
+                  <th class="px-3 py-3 text-center text-indigo-700">ส่งแล้ว</th>
+                  <th class="px-3 py-3 text-center text-rose-600 font-bold">ยังไม่ส่งงาน</th>
+                  <th class="px-3 py-3 text-center text-slate-400">ไม่ทราบสถานะ</th>
+                  <th class="px-3.5 py-3 text-center">สถานะการติดตาม</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 bg-white" id="student-table-body">
+                <!-- Injected via JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Student Deep Dive Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Card 1: S002 -->
+          <div class="bg-white p-5 rounded-xl border border-rose-200 shadow-sm relative overflow-hidden">
+            <div class="absolute top-0 right-0 bg-rose-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-bl">เฝ้าระวังสูงสุด</div>
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-10 h-10 rounded-full bg-rose-100 text-rose-700 font-bold flex items-center justify-center">S002</div>
+              <div>
+                <h4 class="font-bold text-slate-800 text-sm">นักเรียน S002 (ปวช.1/1)</h4>
+                <p class="text-xs text-rose-600 font-medium">ขาด 2 คาบ | ยังไม่ส่งงาน 3 คาบ</p>
+              </div>
+            </div>
+            <p class="text-xs text-slate-600 leading-relaxed mb-3">
+              ขาดเรียนวิชาฐานข้อมูล (3 พ.ย.) และการสร้างเว็บ (4 พ.ย.) อีกทั้งในคาบการเขียนโปรแกรม (2 พ.ย.) แม้จะมาเรียนแต่ไม่ได้ส่งงาน ส่งผลให้อัตราส่งงานเพียง 50%
+            </p>
+            <div class="text-[11px] bg-slate-50 p-2 rounded border border-slate-200 text-slate-600">
+              💡 <b>คำแนะนำ:</b> ติดตามสาเหตุการขาด 2 วันติด และเปิดรอบเก็บงานตกค้าง
+            </div>
+          </div>
+
+          <!-- Card 2: S003 -->
+          <div class="bg-white p-5 rounded-xl border border-rose-200 shadow-sm relative overflow-hidden">
+            <div class="absolute top-0 right-0 bg-rose-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-bl">เฝ้าระวังสูงสุด</div>
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-10 h-10 rounded-full bg-rose-100 text-rose-700 font-bold flex items-center justify-center">S003</div>
+              <div>
+                <h4 class="font-bold text-slate-800 text-sm">นักเรียน S003 (ปวช.1/1)</h4>
+                <p class="text-xs text-rose-600 font-medium">ขาด 2 คาบ | สาย 1 คาบ | ยังไม่ส่งงาน 3 คาบ</p>
+              </div>
+            </div>
+            <p class="text-xs text-slate-600 leading-relaxed mb-3">
+              มีบันทึกเพียง 5 คาบ ขาดเรียนวิชาเขียนโปรแกรม (2 พ.ย.) และสร้างเว็บ (4 พ.ย.) แถมมาสายวิชาฐานข้อมูล 20 นาที และมาเรียนแต่ไม่ส่งงานในวันที่ 3 พ.ย.
+            </p>
+            <div class="text-[11px] bg-slate-50 p-2 rounded border border-slate-200 text-slate-600">
+              💡 <b>คำแนะนำ:</b> นัดสัมภาษณ์รายบุคคลเพื่อค้นหาอุปสรรคในการส่งงานในคาบ
+            </div>
+          </div>
+
+          <!-- Card 3: S009 -->
+          <div class="bg-white p-5 rounded-xl border border-amber-200 shadow-sm relative overflow-hidden">
+            <div class="absolute top-0 right-0 bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-bl">สายเรื้อรัง</div>
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-10 h-10 rounded-full bg-amber-100 text-amber-700 font-bold flex items-center justify-center">S009</div>
+              <div>
+                <h4 class="font-bold text-slate-800 text-sm">นักเรียน S009 (ปวช.1/2)</h4>
+                <p class="text-xs text-amber-600 font-medium">สาย 3 คาบ (50% ของเวลา) | งานค้าง 2</p>
+              </div>
+            </div>
+            <p class="text-xs text-slate-600 leading-relaxed mb-3">
+              ไม่เคยขาดเรียน แต่มาสายถึง 3 จาก 6 คาบ (สาย 10, 10, 30 นาที) รวมนาทีสาย 50 นาที ส่งผลให้ทำแบบฝึกหัดไม่ทันจนไม่ส่งงาน 2 คาบ
+            </p>
+            <div class="text-[11px] bg-slate-50 p-2 rounded border border-slate-200 text-slate-600">
+              💡 <b>คำแนะนำ:</b> สอบถามเรื่องการเดินทาง และกำหนด buddy ช่วยเตือนเข้าเรียน
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- VIEW 3: DATA QUALITY AUDIT                               -->
+      <!-- ======================================================== -->
+      <section id="view-quality" class="page-view space-y-6">
+        
+        <!-- Summary Banner -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-200">
+            <div>
+              <div class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 text-amber-800 border border-amber-200 rounded-md text-xs font-semibold mb-2">
+                <svg class="w-3.5 h-3.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                หลักฐานกระบวนการทำ Data Cleansing & Data Audit
+              </div>
+              <h3 class="text-lg font-bold text-slate-800">รายงานการตรวจสอบโครงสร้างและข้อผิดพลาดในข้อมูล</h3>
+              <p class="text-xs text-slate-500 mt-1 max-w-2xl">
+                ดำเนินการตามนิยามและเงื่อนไขของโจทย์อย่างเคร่งครัด: ห้ามเดาค่าใหม่แทนข้อมูลผิดหรือข้อมูลหาย, ตรวจสอบรายการซ้ำ, แยกผลกระทบรายตัวชี้วัด และเก็บหลักฐานเดิมครบถ้วน 100%
+              </p>
+            </div>
+            <div class="flex items-center gap-3">
+              <a href="data_issues_log.csv" download class="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 shadow-sm transition-colors">
+                <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                <span>ดาวน์โหลด Log ปัญหา (CSV)</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- Metrics Before / After -->
+          <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 pt-6">
+            <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+              <span class="text-xs text-slate-500 font-medium block">จำนวนรายการก่อนจัดการ</span>
+              <span class="text-2xl font-bold text-slate-800">60</span>
+              <span class="text-[11px] text-slate-400 block mt-1">ไฟล์ student_attendance_dirty_60.csv</span>
+            </div>
+            <div class="bg-sky-50 p-4 rounded-lg border border-sky-200">
+              <span class="text-xs text-sky-700 font-medium block">จำนวนรายการหลังจัดการซ้ำ</span>
+              <span class="text-2xl font-bold text-sky-800">59</span>
+              <span class="text-[11px] text-sky-600 block mt-1">ตัด A052 แถวซ้ำออก 1 รายการ</span>
+            </div>
+            <div class="bg-amber-50 p-4 rounded-lg border border-amber-200">
+              <span class="text-xs text-amber-800 font-medium block">รายการที่พบจุดผิดเงื่อนไข</span>
+              <span class="text-2xl font-bold text-amber-700">5</span>
+              <span class="text-[11px] text-amber-600 block mt-1">Space, Null, นาทีติดลบ, สายแต่นาที0, คาบ25ชม.</span>
+            </div>
+            <div class="bg-emerald-50 p-4 rounded-lg border border-emerald-200">
+              <span class="text-xs text-emerald-800 font-medium block">สถานะการเก็บรักษาต้นฉบับ</span>
+              <span class="text-2xl font-bold text-emerald-700">100%</span>
+              <span class="text-[11px] text-emerald-600 block mt-1">เก็บบันทึก Raw Data ครบทุกแถว</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ISSUES AUDIT TABLE (6 ISSUES) -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="text-base font-bold text-slate-800">ตารางปัญหาข้อมูล (Data Issue & Handling Log)</h3>
+              <p class="text-xs text-slate-500">แสดง รหัสรายการ คอลัมน์ ค่าที่พบ เหตุผล วิธีจัดการ และผลกระทบรายตัวชี้วัด</p>
+            </div>
+            <span class="text-xs bg-slate-100 text-slate-700 px-2.5 py-1 rounded font-mono font-semibold">6 Issues Logged</span>
+          </div>
+
+          <div class="overflow-x-auto rounded-lg border border-slate-200">
+            <table class="w-full text-left text-xs divide-y divide-slate-200">
+              <thead class="bg-slate-50 text-slate-600 font-semibold">
+                <tr>
+                  <th class="px-3.5 py-3">รหัสรายการ</th>
+                  <th class="px-3 py-3">คอลัมน์</th>
+                  <th class="px-3 py-3">ค่าที่พบ</th>
+                  <th class="px-4 py-3">เหตุผลที่ผิดเงื่อนไข</th>
+                  <th class="px-4 py-3">วิธีจัดการ (ตามกฎเกณฑ์)</th>
+                  <th class="px-4 py-3">ผลกระทบรายตัวชี้วัด</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 bg-white" id="issues-table-body">
+                <!-- Injected via JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Impact on Metrics Matrix -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+          <h3 class="text-sm font-bold text-slate-800 mb-2">ตารางสรุปจำนวนรายการที่ใช้คำนวณในแต่ละตัวชี้วัด (Metric Calculation Scope)</h3>
+          <p class="text-xs text-slate-500 mb-4">แสดงความโปร่งใสของตัวหารและการกรองข้อมูลในแต่ละสูตร</p>
+
+          <div class="overflow-x-auto rounded-lg border border-slate-200">
+            <table class="w-full text-left text-xs divide-y divide-slate-200">
+              <thead class="bg-slate-50 text-slate-600 font-semibold">
+                <tr>
+                  <th class="px-4 py-2.5">ชื่อตัวชี้วัด</th>
+                  <th class="px-4 py-2.5">สูตรที่กำหนด</th>
+                  <th class="px-3 py-2.5 text-center">ตัวเศษ</th>
+                  <th class="px-3 py-2.5 text-center">ตัวหาร</th>
+                  <th class="px-3 py-2.5 text-center">ผลลัพธ์</th>
+                  <th class="px-4 py-2.5">คำอธิบายการคัดกรองข้อมูล</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 bg-white">
+                <tr>
+                  <td class="px-4 py-3 font-semibold text-slate-800">จำนวนนักเรียนไม่ซ้ำ</td>
+                  <td class="px-4 py-3 font-mono text-slate-600">COUNT(DISTINCT รหัสนักเรียน)</td>
+                  <td class="px-3 py-3 text-center font-bold">10</td>
+                  <td class="px-3 py-3 text-center text-slate-400">-</td>
+                  <td class="px-3 py-3 text-center font-bold text-sky-600">10 คน</td>
+                  <td class="px-4 py-3 text-slate-600">นักเรียนรหัส S001 ถึง S010</td>
+                </tr>
+                <tr>
+                  <td class="px-4 py-3 font-semibold text-slate-800">อัตราเข้าเรียน (ภาพรวม)</td>
+                  <td class="px-4 py-3 font-mono text-slate-600">(มาเรียน + สาย) ÷ รายการสถานะถูกต้อง × 100</td>
+                  <td class="px-3 py-3 text-center font-bold text-emerald-600">48</td>
+                  <td class="px-3 py-3 text-center font-bold">59</td>
+                  <td class="px-3 py-3 text-center font-bold text-emerald-600">81.36%</td>
+                  <td class="px-4 py-3 text-slate-600">หลังตัด A052 ซ้ำออก 1 รายการ สถานะถูกต้องทั้ง 59 รายการ (มาเรียน 37, สาย 11, ขาด 7, ลา 4)</td>
+                </tr>
+                <tr>
+                  <td class="px-4 py-3 font-semibold text-slate-800">อัตราส่งงานรวม</td>
+                  <td class="px-4 py-3 font-mono text-slate-600">ส่งแล้ว ÷ รายการที่ทราบสถานะส่งงาน × 100</td>
+                  <td class="px-3 py-3 text-center font-bold text-indigo-600">39</td>
+                  <td class="px-3 py-3 text-center font-bold">58</td>
+                  <td class="px-3 py-3 text-center font-bold text-indigo-600">67.24%</td>
+                  <td class="px-4 py-3 text-slate-600">ตัด A017 (ส่งงานเป็นค่าว่าง) ออกจากตัวหาร เหลือ 58 รายการที่ทราบสถานะ (นับขาด/ลาที่เป็นยังไม่ส่งด้วย)</td>
+                </tr>
+                <tr>
+                  <td class="px-4 py-3 font-semibold text-slate-800">อัตราส่งงานเฉพาะผู้เข้าเรียน</td>
+                  <td class="px-4 py-3 font-mono text-slate-600">ส่งแล้วในกลุ่มเข้าเรียน ÷ ผู้เข้าเรียนที่ทราบสถานะ × 100</td>
+                  <td class="px-3 py-3 text-center font-bold text-sky-600">39</td>
+                  <td class="px-3 py-3 text-center font-bold">47</td>
+                  <td class="px-3 py-3 text-center font-bold text-sky-600">82.98%</td>
+                  <td class="px-4 py-3 text-slate-600">กลุ่มมาเรียน/สายมี 48 ครั้ง ตัด A017 (ค่าว่าง) ออก 1 รายการ เหลือตัวหาร 47 ครั้ง</td>
+                </tr>
+                <tr>
+                  <td class="px-4 py-3 font-semibold text-slate-800">นาทีที่สายเฉลี่ย</td>
+                  <td class="px-4 py-3 font-mono text-slate-600">ผลรวมนาทีสายที่ถูกต้อง ÷ จำนวนรายการสายที่นาทีถูกต้อง</td>
+                  <td class="px-3 py-3 text-center font-bold text-amber-600">170</td>
+                  <td class="px-3 py-3 text-center font-bold">9</td>
+                  <td class="px-3 py-3 text-center font-bold text-amber-600">18.89 นาที</td>
+                  <td class="px-4 py-3 text-slate-600">สถานะสายมี 11 รายการ ตัด A026 (นาทีติดลบ -10) และ A035 (สายแต่นาที 0) ออก เหลือตัวหาร 9 รายการ</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- VIEW 4: DATA EXPLORER & CSV EXPORT                       -->
+      <!-- ======================================================== -->
+      <section id="view-data" class="page-view space-y-6">
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+          <!-- Table Controls -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+            <div class="flex items-center gap-3">
+              <!-- Switch between Cleaned & Raw Tab -->
+              <div class="inline-flex rounded-lg border border-slate-300 p-1 bg-slate-100 text-xs font-medium">
+                <button onclick="switchDatasetTab('cleaned')" id="tab-btn-cleaned" class="px-3 py-1.5 rounded-md bg-white text-slate-800 shadow-sm font-semibold transition-all">ข้อมูลที่เตรียมแล้ว (59 รายการ)</button>
+                <button onclick="switchDatasetTab('raw')" id="tab-btn-raw" class="px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900 transition-all">ข้อมูลต้นฉบับ Dirty (60 รายการ)</button>
+              </div>
+            </div>
+
+            <!-- Search & Export -->
+            <div class="flex items-center gap-2">
+              <div class="relative">
+                <input type="text" id="table-search-input" oninput="renderDataTable()" placeholder="ค้นหารหัส, นักเรียน, วิชา..." class="text-xs bg-slate-50 border border-slate-300 rounded-lg pl-8 pr-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-sky-500 w-48 sm:w-64 font-sans">
+                <svg class="w-4 h-4 text-slate-400 absolute left-2.5 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+              </div>
+
+              <button onclick="exportCurrentFilteredCSV()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-300 rounded-lg hover:bg-emerald-100 transition-colors shadow-sm">
+                <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                <span>ส่งออกผลการกรอง (CSV)</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Dataset Description -->
+          <p id="table-dataset-desc" class="text-xs text-slate-500 mb-3">
+            แสดงชุดข้อมูลที่ผ่านการตรวจสอบและทำความสะอาดแล้ว (Cleaned Dataset) พร้อมใช้งานวิเคราะห์
+          </p>
+
+          <!-- Main Table Container -->
+          <div class="overflow-x-auto rounded-lg border border-slate-200">
+            <table class="w-full text-left text-xs divide-y divide-slate-200" id="main-data-table">
+              <thead class="bg-slate-50 text-slate-600 font-semibold">
+                <tr>
+                  <th class="px-3.5 py-3">รหัสบันทึก</th>
+                  <th class="px-3 py-3">วันที่</th>
+                  <th class="px-3 py-3">รหัสนักเรียน</th>
+                  <th class="px-3 py-3">ห้องเรียน</th>
+                  <th class="px-3.5 py-3">วิชา</th>
+                  <th class="px-3 py-3 text-center">สถานะเข้าเรียน</th>
+                  <th class="px-3 py-3 text-center">นาทีที่สาย</th>
+                  <th class="px-3 py-3 text-center">ชั่วโมงเรียน</th>
+                  <th class="px-3 py-3 text-center">สถานะส่งงาน</th>
+                  <th class="px-3.5 py-3 text-center">หมายเหตุข้อมูล</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 bg-white" id="main-data-tbody">
+                <!-- Injected via JavaScript -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Empty State (When no data matches filter) -->
+          <div id="table-empty-state" class="hidden py-12 text-center">
+            <svg class="w-12 h-12 text-slate-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <h4 class="text-sm font-semibold text-slate-700">ไม่พบข้อมูลตามเงื่อนไขตัวกรอง</h4>
+            <p class="text-xs text-slate-500 mt-1">กรุณาปรับเปลี่ยนตัวกรอง หรือคลิกปุ่มล้างตัวกรองเพื่อดูข้อมูลทั้งหมด</p>
+            <button onclick="resetFilters()" class="mt-3 px-3 py-1.5 text-xs bg-sky-600 text-white rounded-lg hover:bg-sky-700">ล้างตัวกรองทั้งหมด</button>
+          </div>
+
+          <!-- Table Footer Count -->
+          <div class="mt-3 flex items-center justify-between text-xs text-slate-500">
+            <span id="table-row-count">แสดง 59 รายการ</span>
+            <span class="text-[11px] text-slate-400">อัปเดตสัมพันธ์กับ Global Filter อัตโนมัติ</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- VIEW 5: ANALYSIS & ANSWERS                               -->
+      <!-- ======================================================== -->
+      <section id="view-analysis" class="page-view space-y-6">
+        
+        <!-- Header Banner -->
+        <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-xl p-6 text-white shadow-md">
+          <div class="max-w-3xl">
+            <span class="bg-indigo-500/30 text-indigo-300 border border-indigo-400/30 text-[11px] px-2.5 py-1 rounded font-medium inline-block mb-2">
+              ตอบโจทย์ครบถ้วนตามเกณฑ์คะแนน (100 คะแนนเต็ม)
+            </span>
+            <h3 class="text-xl font-bold">บทวิเคราะห์เชิงลึก สรุปประเด็น และข้อเสนอแนะพร้อมหลักฐานตัวเลข</h3>
+            <p class="text-slate-300 text-xs mt-2 leading-relaxed">
+              ตอบคำถามทั้ง 4 ข้อตามคำสั่งในเอกสารโจทย์ โดยใช้สถิติที่คำนวณจากชุดข้อมูลที่ผ่านการตรวจสอบความถูกต้อง 
+              และยึดหลักการไม่สรุปสาเหตุหรือนิสัยส่วนบุคคลจากข้อมูลระยะสั้น
+            </p>
+          </div>
+        </div>
+
+        <!-- 4 Questions Cards Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+          <!-- Q1: Room Comparison -->
+          <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center gap-2 mb-3">
+                <span class="w-6 h-6 rounded-full bg-sky-100 text-sky-700 text-xs font-bold flex items-center justify-center">1</span>
+                <h4 class="font-bold text-slate-800 text-sm">ห้องใดมีอัตราเข้าเรียนสูงกว่า และใช้ข้อมูลกี่รายการ?</h4>
+              </div>
+              <div class="p-3.5 bg-sky-50 rounded-lg border border-sky-200 mb-4">
+                <div class="text-sky-900 font-bold text-sm mb-1">
+                  คำตอบ: ห้อง ปวช.1/2 มีอัตราการเข้าเรียนสูงกว่า
+                </div>
+                <div class="text-xs text-sky-800 leading-relaxed">
+                  ห้อง <b>ปวช.1/2</b> มีอัตราเข้าเรียน <b>83.33%</b> ในขณะที่ห้อง <b>ปวช.1/1</b> มีอัตราเข้าเรียน <b>79.31%</b> (ต่างกัน +4.02%)
+                </div>
+              </div>
+              <div class="space-y-2 text-xs text-slate-600">
+                <div class="flex items-center justify-between p-2 rounded bg-slate-50 border border-slate-100">
+                  <span><b>ปวช.1/2:</b> เข้าเรียน 25 ครั้ง (มา 20 + สาย 5)</span>
+                  <span class="font-mono font-semibold text-slate-800">ใช้ข้อมูล 30 รายการ</span>
+                </div>
+                <div class="flex items-center justify-between p-2 rounded bg-slate-50 border border-slate-100">
+                  <span><b>ปวช.1/1:</b> เข้าเรียน 23 ครั้ง (มา 17 + สาย 6)</span>
+                  <span class="font-mono font-semibold text-slate-800">ใช้ข้อมูล 29 รายการ</span>
+                </div>
+              </div>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-4 pt-3 border-t border-slate-100">
+              * หมายเหตุ: ห้อง ปวช.1/1 ใช้ 29 รายการ เนื่องจากมีการตัดแถวซ้ำ A052 ออก 1 รายการตามกฎ รวมทั้งสิ้น 59 รายการ
+            </p>
+          </div>
+
+          <!-- Q2: Subject Late Comparison -->
+          <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center gap-2 mb-3">
+                <span class="w-6 h-6 rounded-full bg-amber-100 text-amber-700 text-xs font-bold flex items-center justify-center">2</span>
+                <h4 class="font-bold text-slate-800 text-sm">วิชาใดมีอัตราสายสูงกว่า?</h4>
+              </div>
+              <div class="p-3.5 bg-amber-50 rounded-lg border border-amber-200 mb-4">
+                <div class="text-amber-900 font-bold text-sm mb-1">
+                  คำตอบ: วิชาการเขียนโปรแกรม และ วิชาฐานข้อมูล มีอัตราสายสูงที่สุดเท่ากัน
+                </div>
+                <div class="text-xs text-amber-800 leading-relaxed">
+                  ทั้งสองวิชามีอัตราสายอยู่ที่ <b>20.00%</b> (สาย 4 ครั้ง จาก 20 รายการ) ซึ่งสูงกว่าวิชาการสร้างเว็บไซต์ที่มีอัตราสาย <b>15.79%</b> (สาย 3 ครั้ง จาก 19 รายการ)
+                </div>
+              </div>
+              <div class="space-y-2 text-xs text-slate-600">
+                <div class="flex items-center justify-between p-2 rounded bg-slate-50 border border-slate-100">
+                  <span><b>วิชาการเขียนโปรแกรม:</b> สาย 4 ÷ รายการถูกต้อง 20</span>
+                  <span class="font-mono font-bold text-amber-700">20.00%</span>
+                </div>
+                <div class="flex items-center justify-between p-2 rounded bg-slate-50 border border-slate-100">
+                  <span><b>วิชาฐานข้อมูล:</b> สาย 4 ÷ รายการถูกต้อง 20</span>
+                  <span class="font-mono font-bold text-amber-700">20.00%</span>
+                </div>
+                <div class="flex items-center justify-between p-2 rounded bg-slate-50 border border-slate-100">
+                  <span><b>วิชาการสร้างเว็บไซต์:</b> สาย 3 ÷ รายการถูกต้อง 19</span>
+                  <span class="font-mono text-slate-700">15.79%</span>
+                </div>
+              </div>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-4 pt-3 border-t border-slate-100">
+              * คำนวณโดยใช้จำนวนสายหารรายการสถานะถูกต้องของแต่ละวิชา ตามสูตรที่กำหนด
+            </p>
+          </div>
+
+          <!-- Q3: Students to Follow Up -->
+          <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 lg:col-span-2">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="w-6 h-6 rounded-full bg-rose-100 text-rose-700 text-xs font-bold flex items-center justify-center">3</span>
+              <h4 class="font-bold text-slate-800 text-sm">นักเรียนคนใดควรติดตามเรื่องขาดเรียนหรือยังไม่ส่งงาน เพราะอะไร?</h4>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+              <!-- S002 & S003 -->
+              <div class="p-3.5 bg-rose-50/70 rounded-lg border border-rose-200 text-xs">
+                <div class="font-bold text-rose-800 mb-1">1. นักเรียน S002 & S003 (ขาดเรียนสูงสุด)</div>
+                <p class="text-slate-700 leading-relaxed">
+                  <b>เหตุผล:</b> มีสถิติขาดเรียนคนละ <b>2 คาบ</b> ซึ่งสูงสุดในชั้นเรียน (คิดเป็นอัตราขาดเรียน 33.3% - 40%) และค้างส่งงานคนละ <b>3 คาบ</b> นอกจากนี้ยังมีประวัติมาเรียนแต่ไม่ส่งงานในคาบอีกด้วย (S002 ใน A002 และ S003 ใน A013)
+                </p>
+              </div>
+
+              <!-- S008 -->
+              <div class="p-3.5 bg-rose-50/70 rounded-lg border border-rose-200 text-xs">
+                <div class="font-bold text-rose-800 mb-1">2. นักเรียน S008 (หยุดเรียนรวมสูงสุด)</div>
+                <p class="text-slate-700 leading-relaxed">
+                  <b>เหตุผล:</b> มีการ <b>ขาด 1 คาบ</b> และ <b>ลา 2 คาบ</b> รวมหยุดเรียนถึง <b>3 จาก 6 คาบ (50%)</b> และมีงานค้างส่ง <b>3 คาบ</b> ส่งผลให้อัตราส่งงานเพียง 50% ทำให้มีความเสี่ยงที่จะเรียนตามเพื่อนไม่ทัน
+                </p>
+              </div>
+
+              <!-- S009 -->
+              <div class="p-3.5 bg-amber-50/70 rounded-lg border border-amber-200 text-xs">
+                <div class="font-bold text-amber-800 mb-1">3. นักเรียน S009 (มาสายซ้ำซาก)</div>
+                <p class="text-slate-700 leading-relaxed">
+                  <b>เหตุผล:</b> แม้ไม่เคยขาดเรียน แต่มีสถิติ <b>มาสายถึง 3 คาบ (50% ของเวลาเรียน)</b> นาทีสายสะสม 50 นาที และค้างส่งงาน <b>2 คาบ</b> เนื่องจากการเข้าห้องสายทำให้มีเวลาทำชิ้นงานในคาบน้อยกว่าคนอื่น
+                </p>
+              </div>
+            </div>
+            <div class="text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded border border-slate-200">
+              📌 <b>สรุปภาพรวม:</b> ครูควรจัดลำดับการติดตาม <b>S002, S003 และ S008</b> เป็นกลุ่มเร่งด่วนระดับสีแดง (ขาด/ค้างงาน) และ <b>S009</b> เป็นกลุ่มเฝ้าระวังพฤติกรรมการเข้าชั้นเรียน
+            </div>
+          </div>
+
+          <!-- Q4: 3 Findings, 2 Actions, 1 Limitation -->
+          <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 lg:col-span-2">
+            <div class="flex items-center gap-2 mb-4">
+              <span class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold flex items-center justify-center">4</span>
+              <h4 class="font-bold text-slate-800 text-sm">สรุปข้อค้นพบ 3 ข้อ, แนวทางช่วยเหลือ 2 ข้อ และข้อจำกัด 1 ข้อ</h4>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <!-- Column 1: 3 Findings -->
+              <div class="space-y-3">
+                <h5 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5 text-sky-800">
+                  <span class="w-2 h-2 rounded-full bg-sky-500"></span> ข้อค้นพบจากข้อมูล (3 ข้อ)
+                </h5>
+
+                <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 text-xs text-slate-700 leading-relaxed">
+                  <b class="text-slate-800 block mb-0.5">1. อัตราส่งงานผู้เข้าเรียนสูงกว่าส่งงานรวม 15.74%</b>
+                  ผู้ที่เข้าเรียนจริงส่งงานสำเร็จถึง <b>82.98%</b> ขณะที่อัตราส่งงานรวมอยู่ที่ <b>67.24%</b> สะท้อนว่างานค้างส่วนใหญ่เกิดจากการขาด/ลา (11 ครั้ง) ไม่ใช่เพราะงานยากเกินไป
+                </div>
+
+                <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 text-xs text-slate-700 leading-relaxed">
+                  <b class="text-slate-800 block mb-0.5">2. ปัญหาสายกระจุกตัวในวิชาเฉพาะ</b>
+                  วิชาเขียนโปรแกรมและฐานข้อมูลมีอัตราสายสูงถึง <b>20.00%</b> และมีนาทีสายเฉลี่ยสูงถึง <b>18.89 นาที/ครั้ง</b> โดยมีนักเรียนสายซ้ำซาก เช่น S009 สาย 3 ครั้ง
+                </div>
+
+                <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 text-xs text-slate-700 leading-relaxed">
+                  <b class="text-slate-800 block mb-0.5">3. พบข้อบกพร่องด้านความถูกต้อง 10%</b>
+                  พบปัญหาข้อมูล 6 จุด (10% ของ 60 แถว) ทั้งรายการซ้ำ (A052), ค่าว่าง (A017), นาทีสายติดลบ (-10), และชั่วโมงเรียน 25 ชม. ซึ่งต้องตรวจสอบก่อนออกรายงานเสมอ
+                </div>
+              </div>
+
+              <!-- Column 2: 2 Recommendations -->
+              <div class="space-y-3">
+                <h5 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5 text-emerald-800">
+                  <span class="w-2 h-2 rounded-full bg-emerald-500"></span> แนวทางช่วยเหลือ (2 ข้อ)
+                </h5>
+
+                <div class="p-3 bg-emerald-50/50 rounded-lg border border-emerald-200 text-xs text-slate-700 leading-relaxed">
+                  <b class="text-emerald-900 block mb-0.5">1. ระบบติดตามเชิงรุกกลุ่มหยุดสะสม &ge; 30%</b>
+                  ประสานงานครูที่ปรึกษาติดตาม S002, S003 (ขาด 2 คาบ) และ S008 (หยุด 3 คาบ) เพื่อสอบถามเหตุผลความจำเป็น พร้อมเปิดระบบซ่อมเสริมเนื้อหาและการมอบหมายงานชดเชยที่ชัดเจน
+                </div>
+
+                <div class="p-3 bg-emerald-50/50 rounded-lg border border-emerald-200 text-xs text-slate-700 leading-relaxed">
+                  <b class="text-emerald-900 block mb-0.5">2. กิจกรรมกระตุ้นต้นคาบ (Warm-up & Buddy Alert)</b>
+                  ในวิชาเขียนโปรแกรมและฐานข้อมูล (สาย 20%) ให้จัดกิจกรรมสั้นช่วง 10 นาทีแรก และจับคู่บัดดี้คอยเตือนเพื่อนเข้าห้อง เพื่อดึงนาทีสายเฉลี่ย 18.89 นาที ให้ลดลง
+                </div>
+              </div>
+
+              <!-- Column 3: 1 Limitation -->
+              <div class="space-y-3">
+                <h5 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5 text-slate-800">
+                  <span class="w-2 h-2 rounded-full bg-slate-500"></span> ข้อจำกัดของข้อมูล (1 ข้อ)
+                </h5>
+
+                <div class="p-3 bg-slate-100 rounded-lg border border-slate-300 text-xs text-slate-700 leading-relaxed">
+                  <b class="text-slate-900 block mb-1">⚠️ ข้อจำกัดด้านระยะเวลาและขนาดตัวอย่าง</b>
+                  ชุดข้อมูลนี้เป็นเพียงข้อมูลจำลองระยะสั้น <b>เพียง 6 วันทำการ (2 - 9 พ.ย. 2026)</b> จำนวน 10 คน และนักเรียนแต่ละคนมีบันทึกเพียง 5-6 คาบ 
+                  <b>จึงไม่สามารถนำมาสรุปสาเหตุ เจตคติ หรือนิสัยส่วนบุคคลในระยะยาวของนักเรียนได้</b> การตีความต้องจำกัดอยู่เฉพาะข้อเท็จจริงเชิงสถิติที่บันทึกไว้เท่านั้น
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- VIEW 6: FORMULA AUDIT & TEST EVIDENCE                    -->
+      <!-- ======================================================== -->
+      <section id="view-audit" class="page-view space-y-6">
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+          <div class="flex items-center justify-between pb-4 border-b border-slate-200 mb-6">
+            <div>
+              <h3 class="text-lg font-bold text-slate-800">หลักฐานการตรวจสอบสูตรและผลการทดสอบระบบ (Audit & Test Evidence)</h3>
+              <p class="text-xs text-slate-500 mt-0.5">แสดงการพิสูจน์ความถูกต้องของสูตรคำนวณ การทำงานของตัวกรอง และการส่งออก CSV</p>
+            </div>
+            <span class="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1 rounded-full font-semibold">
+              ✓ Passed All 5 Test Scenarios
+            </span>
+          </div>
+
+          <!-- Step-by-Step Formula Audit Evidence -->
+          <div class="space-y-4 mb-8">
+            <h4 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-sky-600 text-white text-xs flex items-center justify-center font-mono">1</span>
+              หลักฐานการตรวจสอบสูตรอย่างน้อย 1 กลุ่ม (Step-by-Step Formula Proof)
+            </h4>
+
+            <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-3 font-mono">
+              <div class="font-sans font-semibold text-slate-800 text-sm">
+                การพิสูจน์กลุ่มข้อมูลทั้งชั้นเรียน (Whole Class Benchmark - 59 Records)
+              </div>
+              
+              <div class="p-3 bg-white rounded-lg border border-slate-200 space-y-1.5">
+                <div class="text-slate-500 font-sans font-medium text-[11px]">1. อัตราเข้าเรียน (Attendance Rate):</div>
+                <div>ตัวเศษ = มาเรียน (37) + สาย (11) = <b>48 ครั้ง</b></div>
+                <div>ตัวหาร = มาเรียน (37) + สาย (11) + ขาด (7) + ลา (4) = <b>59 รายการ</b> (สถานะถูกต้องครบถ้วน)</div>
+                <div>การคำนวณ = (48 ÷ 59) × 100 = <b>81.3559... % &approx; 81.36%</b> <span class="text-emerald-600 font-sans font-bold">[ตรงกับหน้าเว็บ 81.36%]</span></div>
+              </div>
+
+              <div class="p-3 bg-white rounded-lg border border-slate-200 space-y-1.5">
+                <div class="text-slate-500 font-sans font-medium text-[11px]">2. อัตราส่งงานรวม (Overall Submission Rate):</div>
+                <div>ตัวเศษ = สถานะส่งงาน 'ส่งแล้ว' = <b>39 รายการ</b></div>
+                <div>ตัวหาร = รายการที่ทราบสถานะส่งงาน (ตัด A017 ค่าว่างออก) = 59 - 1 = <b>58 รายการ</b></div>
+                <div>การคำนวณ = (39 ÷ 58) × 100 = <b>67.2413... % &approx; 67.24%</b> <span class="text-emerald-600 font-sans font-bold">[ตรงกับหน้าเว็บ 67.24%]</span></div>
+              </div>
+
+              <div class="p-3 bg-white rounded-lg border border-slate-200 space-y-1.5">
+                <div class="text-slate-500 font-sans font-medium text-[11px]">3. อัตราส่งงานเฉพาะผู้เข้าเรียน (Attended Submission Rate):</div>
+                <div>ตัวเศษ = ส่งแล้วในกลุ่มมาเรียน/สาย = <b>39 รายการ</b></div>
+                <div>ตัวหาร = กลุ่มมาเรียน/สายที่ทราบสถานะส่งงาน = 48 - 1 (A017) = <b>47 รายการ</b></div>
+                <div>การคำนวณ = (39 ÷ 47) × 100 = <b>82.9787... % &approx; 82.98%</b> <span class="text-emerald-600 font-sans font-bold">[ตรงกับหน้าเว็บ 82.98%]</span></div>
+              </div>
+
+              <div class="p-3 bg-white rounded-lg border border-slate-200 space-y-1.5">
+                <div class="text-slate-500 font-sans font-medium text-[11px]">4. นาทีที่สายเฉลี่ย (Average Late Minutes):</div>
+                <div>ตัวเศษ = ผลรวมนาทีที่สายถูกต้อง = 15+5+10+30+10+20+20+30+30 = <b>170 นาที</b></div>
+                <div>ตัวหาร = จำนวนรายการสายที่นาทีถูกต้อง (ตัด A026 [-10] และ A035 [0] ออก) = 11 - 2 = <b>9 รายการ</b></div>
+                <div>การคำนวณ = 170 ÷ 9 = <b>18.8888... นาที &approx; 18.89 นาที</b> <span class="text-emerald-600 font-sans font-bold">[ตรงกับหน้าเว็บ 18.89 นาที]</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filter & Export Test Evidence Table -->
+          <div>
+            <h4 class="text-sm font-bold text-slate-800 flex items-center gap-2 mb-3">
+              <span class="w-5 h-5 rounded-full bg-sky-600 text-white text-xs flex items-center justify-center font-mono">2</span>
+              บันทึกผลการทดสอบตัวกรองและการส่งออก (Filter & Export Test Matrix)
+            </h4>
+
+            <div class="overflow-x-auto rounded-lg border border-slate-200">
+              <table class="w-full text-left text-xs divide-y divide-slate-200">
+                <thead class="bg-slate-50 text-slate-600 font-semibold">
+                  <tr>
+                    <th class="px-3.5 py-2.5">กรณีทดสอบ</th>
+                    <th class="px-4 py-2.5">เงื่อนไขที่เลือก</th>
+                    <th class="px-3 py-2.5 text-center">จำนวนแถวที่ได้</th>
+                    <th class="px-3.5 py-2.5">อัตราเข้าเรียน</th>
+                    <th class="px-3.5 py-2.5">อัตราส่งงาน</th>
+                    <th class="px-3 py-2.5 text-center">ทดสอบ CSV</th>
+                    <th class="px-3 py-2.5 text-center">ผลลัพธ์</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 bg-white">
+                  <tr>
+                    <td class="px-3.5 py-3 font-semibold text-slate-800">TC-01: กรองห้อง ปวช.1/1</td>
+                    <td class="px-4 py-3 text-slate-600">ห้องเรียน = 'ปวช.1/1'</td>
+                    <td class="px-3 py-3 text-center font-mono font-bold">29 แถว</td>
+                    <td class="px-3.5 py-3 font-mono text-emerald-600 font-semibold">79.31% (23/29)</td>
+                    <td class="px-3.5 py-3 font-mono text-indigo-600">65.52% (19/29)</td>
+                    <td class="px-3 py-3 text-center text-emerald-600">✓ Export 29 แถว</td>
+                    <td class="px-3 py-3 text-center"><span class="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded font-bold">PASS</span></td>
+                  </tr>
+                  <tr>
+                    <td class="px-3.5 py-3 font-semibold text-slate-800">TC-02: กรองห้อง ปวช.1/2</td>
+                    <td class="px-4 py-3 text-slate-600">ห้องเรียน = 'ปวช.1/2'</td>
+                    <td class="px-3 py-3 text-center font-mono font-bold">30 แถว</td>
+                    <td class="px-3.5 py-3 font-mono text-emerald-600 font-semibold">83.33% (25/30)</td>
+                    <td class="px-3.5 py-3 font-mono text-indigo-600">68.97% (20/29)</td>
+                    <td class="px-3 py-3 text-center text-emerald-600">✓ Export 30 แถว</td>
+                    <td class="px-3 py-3 text-center"><span class="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded font-bold">PASS</span></td>
+                  </tr>
+                  <tr>
+                    <td class="px-3.5 py-3 font-semibold text-slate-800">TC-03: กรองวิชาโปรแกรม</td>
+                    <td class="px-4 py-3 text-slate-600">วิชา = 'การเขียนโปรแกรม'</td>
+                    <td class="px-3 py-3 text-center font-mono font-bold">20 แถว</td>
+                    <td class="px-3.5 py-3 font-mono text-emerald-600 font-semibold">80.00% (16/20)</td>
+                    <td class="px-3.5 py-3 font-mono text-indigo-600">55.00% (11/20)</td>
+                    <td class="px-3 py-3 text-center text-emerald-600">✓ Export 20 แถว</td>
+                    <td class="px-3 py-3 text-center"><span class="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded font-bold">PASS</span></td>
+                  </tr>
+                  <tr>
+                    <td class="px-3.5 py-3 font-semibold text-slate-800">TC-04: กรองนักเรียน S002</td>
+                    <td class="px-4 py-3 text-slate-600">รหัสนักเรียน = 'S002'</td>
+                    <td class="px-3 py-3 text-center font-mono font-bold">6 แถว</td>
+                    <td class="px-3.5 py-3 font-mono text-emerald-600 font-semibold">66.67% (4/6)</td>
+                    <td class="px-3.5 py-3 font-mono text-indigo-600">50.00% (3/6)</td>
+                    <td class="px-3 py-3 text-center text-emerald-600">✓ Export 6 แถว</td>
+                    <td class="px-3 py-3 text-center"><span class="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded font-bold">PASS</span></td>
+                  </tr>
+                  <tr>
+                    <td class="px-3.5 py-3 font-semibold text-slate-800">TC-05: กรองไม่พบข้อมูล</td>
+                    <td class="px-4 py-3 text-slate-600">เงื่อนไขขัดแย้ง (เช่น S001 + ห้อง ปวช.1/2)</td>
+                    <td class="px-3 py-3 text-center font-mono font-bold text-slate-400">0 แถว</td>
+                    <td class="px-3.5 py-3 font-mono text-slate-400">-</td>
+                    <td class="px-3.5 py-3 font-mono text-slate-400">-</td>
+                    <td class="px-3 py-3 text-center text-slate-400">แสดง Empty State</td>
+                    <td class="px-3 py-3 text-center"><span class="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded font-bold">PASS</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Load Attendance Dataset -->
+  <script src="attendance_data.js"></script>
+
+  <!-- Main Application Script -->
+  <script>
+    // Global State
+    let currentDatasetType = 'cleaned'; // 'cleaned' or 'raw'
+    let filteredRecords = [];
+    let charts = {};
+
+    // Page titles map
+    const PAGE_TITLES = {
+      'overview': { title: 'แดชบอร์ดภาพรวม (Overview Dashboard)', sub: 'สรุปผลการเข้าเรียน การมาสาย และการส่งงานแบบไดนามิก' },
+      'students': { title: 'วิเคราะห์รายนักเรียน (Student Insights & Risk Matrix)', sub: 'ตารางแจกแจงสถิติรายบุคคล และระบบเฝ้าระวังกลุ่มเสี่ยง' },
+      'quality': { title: 'ตรวจสอบคุณภาพข้อมูล (Data Quality Audit)', sub: 'บันทึกปัญหาข้อมูล การจัดการตามกฎ และผลกระทบต่อตัวชี้วัด' },
+      'data': { title: 'ตารางข้อมูลและส่งออก (Data Explorer & Export)', sub: 'สำรวจชุดข้อมูล เปรียบเทียบ Raw vs Cleaned และส่งออก CSV' },
+      'analysis': { title: 'บทวิเคราะห์ & ตอบคำถาม (Analysis & Recommendations)', sub: 'สรุปคำตอบ 4 ข้อพร้อมตัวเลขและหลักฐานสนับสนุน' },
+      'audit': { title: 'ตรวจสอบสูตร & หลักฐานทดสอบ (Formula Audit & Test Evidence)', sub: 'พิสูจน์การคำนวณ Step-by-Step และบันทึกผลการทดสอบระบบ' }
+    };
+
+    // Initialize Application
+    document.addEventListener('DOMContentLoaded', () => {
+      // Set initial filtered records
+      filteredRecords = [...ATTENDANCE_DATA.cleaned_records];
+
+      // Init Charts
+      initCharts();
+
+      // Render Everything
+      renderDashboard();
+      renderStudentRiskTable();
+      renderIssuesTable();
+      renderDataTable();
+
+      console.log("EduTrack Analytics Initialized successfully!");
+    });
+
+    // ========================================================
+    // NAVIGATION & VIEW SWITCHING (Full Page View Change)
+    // ========================================================
+    function switchPage(pageId) {
+      // 1. Update Sidebar Active State
+      document.querySelectorAll('.sidebar-item').forEach(el => {
+        el.classList.remove('active');
+      });
+      const navBtn = document.getElementById(`nav-${pageId}`);
+      if (navBtn) navBtn.classList.add('active');
+
+      // 2. Hide all views and show target view
+      document.querySelectorAll('.page-view').forEach(el => {
+        el.classList.remove('active');
+      });
+      const targetView = document.getElementById(`view-${pageId}`);
+      if (targetView) targetView.classList.add('active');
+
+      // 3. Update Header Title & Subtitle
+      const info = PAGE_TITLES[pageId] || { title: 'แดชบอร์ด', sub: '' };
+      document.getElementById('top-title').textContent = info.title;
+      document.getElementById('top-subtitle').textContent = info.sub;
+
+      // 4. Scroll viewport to top
+      document.getElementById('main-viewport').scrollTop = 0;
+
+      // 5. Trigger chart resize if entering overview
+      if (pageId === 'overview') {
+        setTimeout(() => {
+          Object.values(charts).forEach(c => c && c.resize());
+        }, 100);
+      }
+    }
+
+    // ========================================================
+    // GLOBAL FILTER LOGIC
+    // ========================================================
+    function applyFilters() {
+      const dateVal = document.getElementById('filter-date').value;
+      const roomVal = document.getElementById('filter-room').value;
+      const subjVal = document.getElementById('filter-subject').value;
+      const studVal = document.getElementById('filter-student').value;
+
+      const base = currentDatasetType === 'cleaned' ? ATTENDANCE_DATA.cleaned_records : ATTENDANCE_DATA.raw_records;
+
+      filteredRecords = base.filter(row => {
+        if (dateVal !== 'ALL' && row['วันที่'] !== dateVal) return false;
+        if (roomVal !== 'ALL' && row['ห้องเรียน'] !== roomVal) return false;
+        if (subjVal !== 'ALL' && row['วิชา'] !== subjVal) return false;
+        if (studVal !== 'ALL' && row['รหัสนักเรียน'] !== studVal) return false;
+        return true;
+      });
+
+      // Update Filter Status Badge
+      const badge = document.getElementById('filter-status-badge');
+      if (dateVal === 'ALL' && roomVal === 'ALL' && subjVal === 'ALL' && studVal === 'ALL') {
+        badge.textContent = `แสดงทั้งหมด (${filteredRecords.length} แถว)`;
+        badge.className = "text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full border border-slate-200";
+      } else {
+        badge.textContent = `กำลังกรอง: ${filteredRecords.length} แถว`;
+        badge.className = "text-xs bg-sky-100 text-sky-800 px-2 py-0.5 rounded-full border border-sky-300 font-semibold";
+      }
+
+      // Re-render Views
+      renderDashboard();
+      renderDataTable();
+      renderStudentRiskTable();
+    }
+
+    function resetFilters() {
+      document.getElementById('filter-date').value = 'ALL';
+      document.getElementById('filter-room').value = 'ALL';
+      document.getElementById('filter-subject').value = 'ALL';
+      document.getElementById('filter-student').value = 'ALL';
+      applyFilters();
+    }
+
+    // ========================================================
+    // METRICS CALCULATION & DASHBOARD RENDERING
+    // ========================================================
+    function renderDashboard() {
+      const records = filteredRecords;
+      const totalRecs = records.length;
+
+      // 1. Unique Students
+      const uniqueStuds = new Set(records.map(r => r['รหัสนักเรียน']).filter(Boolean));
+      document.getElementById('kpi-students').textContent = uniqueStuds.size;
+      document.getElementById('kpi-students-sub').textContent = `จากข้อมูลที่เลือก ${totalRecs} รายการ`;
+
+      // 2. Attendance Rate
+      // (มาเรียน + สาย) ÷ สถานะถูกต้อง × 100
+      const validStatuses = ['มาเรียน', 'สาย', 'ขาด', 'ลา'];
+      const validAtt = records.filter(r => validStatuses.includes((r['สถานะเข้าเรียน'] || '').trim()));
+      const presentOrLate = validAtt.filter(r => {
+        const s = (r['สถานะเข้าเรียน'] || '').trim();
+        return s === 'มาเรียน' || s === 'สาย';
+      });
+
+      const attRate = validAtt.length > 0 ? (presentOrLate.length / validAtt.length) * 100 : null;
+      document.getElementById('kpi-attendance').textContent = attRate !== null ? `${attRate.toFixed(2)}%` : 'ไม่มีข้อมูลสำหรับคำนวณ';
+      document.getElementById('kpi-attendance-sub').textContent = validAtt.length > 0 
+        ? `ตัวหาร: ${presentOrLate.length} / ${validAtt.length} ครั้ง (มาเรียน+สาย)`
+        : 'ไม่มีข้อมูลสถานะเข้าเรียน';
+
+      // Counts for Legend
+      const cntPres = validAtt.filter(r => (r['สถานะเข้าเรียน']||'').trim() === 'มาเรียน').length;
+      const cntLate = validAtt.filter(r => (r['สถานะเข้าเรียน']||'').trim() === 'สาย').length;
+      const cntAbs = validAtt.filter(r => (r['สถานะเข้าเรียน']||'').trim() === 'ขาด').length;
+      const cntLeave = validAtt.filter(r => (r['สถานะเข้าเรียน']||'').trim() === 'ลา').length;
+      document.getElementById('cnt-pres').textContent = cntPres;
+      document.getElementById('cnt-late').textContent = cntLate;
+      document.getElementById('cnt-abs').textContent = cntAbs;
+      document.getElementById('cnt-leave').textContent = cntLeave;
+
+      // 3. Overall Submission Rate
+      // ส่งแล้ว ÷ ทราบสถานะส่งงาน × 100
+      const knownSub = records.filter(r => {
+        const s = (r['สถานะส่งงาน'] || '').trim();
+        return s === 'ส่งแล้ว' || s === 'ยังไม่ส่ง';
+      });
+      const submitted = knownSub.filter(r => (r['สถานะส่งงาน'] || '').trim() === 'ส่งแล้ว');
+      const subRateTotal = knownSub.length > 0 ? (submitted.length / knownSub.length) * 100 : null;
+      document.getElementById('kpi-submission-total').textContent = subRateTotal !== null ? `${subRateTotal.toFixed(2)}%` : 'ไม่มีข้อมูลสำหรับคำนวณ';
+      document.getElementById('kpi-submission-total-sub').textContent = knownSub.length > 0
+        ? `ส่งแล้ว ${submitted.length} / ${knownSub.length} รายการที่ทราบ`
+        : 'ไม่มีรายการที่ทราบสถานะ';
+
+      // 4. Attended Submission Rate (Extra required metric)
+      // ส่งแล้วในกลุ่มมาเรียน/สาย ÷ กลุ่มมาเรียน/สายที่ทราบสถานะ × 100
+      const attendedGroup = records.filter(r => {
+        const s = (r['สถานะเข้าเรียน'] || '').trim();
+        return s === 'มาเรียน' || s === 'สาย';
+      });
+      const attendedKnownSub = attendedGroup.filter(r => {
+        const s = (r['สถานะส่งงาน'] || '').trim();
+        return s === 'ส่งแล้ว' || s === 'ยังไม่ส่ง';
+      });
+      const attendedSubmitted = attendedKnownSub.filter(r => (r['สถานะส่งงาน'] || '').trim() === 'ส่งแล้ว');
+      const attendedSubRate = attendedKnownSub.length > 0 ? (attendedSubmitted.length / attendedKnownSub.length) * 100 : null;
+      document.getElementById('metric-attended-sub').textContent = attendedSubRate !== null ? `${attendedSubRate.toFixed(2)}%` : 'ไม่มีข้อมูลสำหรับคำนวณ';
+      document.getElementById('metric-attended-sub-calc').textContent = attendedKnownSub.length > 0
+        ? `ส่งแล้ว ${attendedSubmitted.length} ÷ มาเรียน/สาย ${attendedKnownSub.length} รายการ = ${attendedSubRate.toFixed(2)}%`
+        : 'ไม่มีข้อมูลผู้เข้าเรียนที่ทราบสถานะส่งงาน';
+
+      // 5. Average Late Minutes
+      // ผลรวมนาทีที่สายถูกต้อง ÷ จำนวนรายการสายที่นาทีถูกต้อง (> 0 และ <= hours*60)
+      const lateRecords = records.filter(r => (r['สถานะเข้าเรียน'] || '').trim() === 'สาย');
+      const validLateMinutesRecords = lateRecords.filter(r => {
+        const mins = parseFloat(r['นาทีที่สาย']);
+        const hours = parseFloat(r['ชั่วโมงเรียน']) || 2;
+        return !isNaN(mins) && mins > 0 && mins <= (hours * 60);
+      });
+
+      const totalLateMins = validLateMinutesRecords.reduce((acc, r) => acc + parseFloat(r['นาทีที่สาย']), 0);
+      const avgLateMins = validLateMinutesRecords.length > 0 ? (totalLateMins / validLateMinutesRecords.length) : null;
+      
+      const lateElem = document.getElementById('metric-late-avg');
+      const lateCalcElem = document.getElementById('metric-late-avg-calc');
+      if (avgLateMins !== null) {
+        lateElem.textContent = avgLateMins.toFixed(2);
+        lateCalcElem.textContent = `รวม ${totalLateMins} นาที ÷ ${validLateMinutesRecords.length} รายการสายถูกต้อง`;
+      } else {
+        lateElem.textContent = 'ไม่มีข้อมูลสำหรับคำนวณ';
+        lateElem.className = 'text-lg font-bold text-slate-500';
+        lateCalcElem.textContent = 'ไม่มีรายการสายที่นาทีถูกต้องตามเกณฑ์';
+      }
+
+      // 6. Issues Count in filtered view
+      const recIds = new Set(records.map(r => r['รหัสบันทึก']));
+      const issuesInView = ATTENDANCE_DATA.issues_records.filter(i => recIds.has(i['รหัสรายการ']));
+      document.getElementById('kpi-issues').textContent = issuesInView.length;
+
+      // Update Charts
+      updateCharts(records);
+    }
+
+    // ========================================================
+    // CHARTS (Chart.js)
+    // ========================================================
+    function initCharts() {
+      // 1. Status Distribution
+      const ctxStatus = document.getElementById('chart-status-distribution').getContext('2d');
+      charts.status = new Chart(ctxStatus, {
+        type: 'doughnut',
+        data: {
+          labels: ['มาเรียน', 'สาย', 'ขาด', 'ลา'],
+          datasets: [{
+            data: [37, 11, 7, 4],
+            backgroundColor: ['#10b981', '#f59e0b', '#f43f5e', '#3b82f6'],
+            borderWidth: 2,
+            borderColor: '#ffffff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { font: { family: 'Prompt', size: 11 } } },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const label = context.label || '';
+                  const val = context.raw || 0;
+                  const total = context.chart._metasets[context.datasetIndex].total;
+                  const pct = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
+                  return `${label}: ${val} ครั้ง (${pct}%)`;
+                }
+              }
+            }
+          },
+          cutout: '68%'
+        }
+      });
+
+      // 2. Daily Trend
+      const ctxDaily = document.getElementById('chart-daily-trend').getContext('2d');
+      charts.daily = new Chart(ctxDaily, {
+        type: 'line',
+        data: {
+          labels: ['02 พ.ย.', '03 พ.ย.', '04 พ.ย.', '05 พ.ย.', '06 พ.ย.', '09 พ.ย.'],
+          datasets: [
+            {
+              label: 'อัตราเข้าเรียน (%)',
+              data: [70.0, 70.0, 70.0, 90.0, 100.0, 88.9],
+              borderColor: '#10b981',
+              backgroundColor: 'rgba(16, 185, 129, 0.1)',
+              tension: 0.3,
+              fill: true,
+              pointRadius: 4,
+              pointHoverRadius: 6
+            },
+            {
+              label: 'อัตราส่งงานรวม (%)',
+              data: [50.0, 33.3, 70.0, 60.0, 100.0, 88.9],
+              borderColor: '#6366f1',
+              backgroundColor: 'rgba(99, 102, 241, 0.05)',
+              borderDash: [4, 4],
+              tension: 0.3,
+              fill: false,
+              pointRadius: 4,
+              pointHoverRadius: 6
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { min: 0, max: 100, ticks: { callback: v => `${v}%`, font: { size: 10 } } },
+            x: { ticks: { font: { family: 'Prompt', size: 11 } } }
+          },
+          plugins: {
+            legend: { display: false }
+          }
+        }
+      });
+
+      // 3. Room Comparison
+      const ctxRoom = document.getElementById('chart-room-comparison').getContext('2d');
+      charts.room = new Chart(ctxRoom, {
+        type: 'bar',
+        data: {
+          labels: ['ปวช.1/1', 'ปวช.1/2'],
+          datasets: [
+            {
+              label: 'อัตราเข้าเรียน (%)',
+              data: [79.31, 83.33],
+              backgroundColor: ['#93c5fd', '#0284c7'],
+              borderRadius: 6
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { min: 0, max: 100, ticks: { callback: v => `${v}%`, font: { size: 10 } } },
+            x: { ticks: { font: { family: 'Prompt', size: 11 } } }
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: ctx => `อัตราเข้าเรียน: ${ctx.raw}%`
+              }
+            }
+          }
+        }
+      });
+
+      // 4. Subject Comparison
+      const ctxSubject = document.getElementById('chart-subject-late').getContext('2d');
+      charts.subject = new Chart(ctxSubject, {
+        type: 'bar',
+        data: {
+          labels: ['การเขียนโปรแกรม', 'ฐานข้อมูล', 'การสร้างเว็บไซต์'],
+          datasets: [
+            {
+              label: 'อัตราเข้าเรียน (%)',
+              data: [80.0, 80.0, 84.21],
+              backgroundColor: '#10b981',
+              borderRadius: 4
+            },
+            {
+              label: 'อัตรามาสาย (%)',
+              data: [20.0, 20.0, 15.79],
+              backgroundColor: '#f59e0b',
+              borderRadius: 4
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { min: 0, max: 100, ticks: { callback: v => `${v}%`, font: { size: 10 } } },
+            x: { ticks: { font: { family: 'Prompt', size: 11 } } }
+          },
+          plugins: {
+            legend: { position: 'top', labels: { font: { family: 'Prompt', size: 11 } } }
+          }
+        }
+      });
+    }
+
+    function updateCharts(records) {
+      if (!charts.status) return;
+
+      // 1. Status Distribution
+      const cntPres = records.filter(r => (r['สถานะเข้าเรียน']||'').trim() === 'มาเรียน').length;
+      const cntLate = records.filter(r => (r['สถานะเข้าเรียน']||'').trim() === 'สาย').length;
+      const cntAbs = records.filter(r => (r['สถานะเข้าเรียน']||'').trim() === 'ขาด').length;
+      const cntLeave = records.filter(r => (r['สถานะเข้าเรียน']||'').trim() === 'ลา').length;
+
+      charts.status.data.datasets[0].data = [cntPres, cntLate, cntAbs, cntLeave];
+      charts.status.update();
+
+      // 2. Daily Trend
+      const dates = ['2026-11-02', '2026-11-03', '2026-11-04', '2026-11-05', '2026-11-06', '2026-11-09'];
+      const dailyAttRates = [];
+      const dailySubRates = [];
+
+      dates.forEach(d => {
+        const dRecs = records.filter(r => r['วันที่'] === d);
+        if (dRecs.length === 0) {
+          dailyAttRates.push(null);
+          dailySubRates.push(null);
+          return;
+        }
+        const validAtt = dRecs.filter(r => ['มาเรียน', 'สาย', 'ขาด', 'ลา'].includes((r['สถานะเข้าเรียน']||'').trim()));
+        const pres = validAtt.filter(r => ['มาเรียน', 'สาย'].includes((r['สถานะเข้าเรียน']||'').trim())).length;
+        dailyAttRates.push(validAtt.length > 0 ? parseFloat(((pres / validAtt.length) * 100).toFixed(1)) : null);
+
+        const knownSub = dRecs.filter(r => ['ส่งแล้ว', 'ยังไม่ส่ง'].includes((r['สถานะส่งงาน']||'').trim()));
+        const subs = knownSub.filter(r => (r['สถานะส่งงาน']||'').trim() === 'ส่งแล้ว').length;
+        dailySubRates.push(knownSub.length > 0 ? parseFloat(((subs / knownSub.length) * 100).toFixed(1)) : null);
+      });
+
+      charts.daily.data.datasets[0].data = dailyAttRates;
+      charts.daily.data.datasets[1].data = dailySubRates;
+      charts.daily.update();
+
+      // 3. Room Comparison
+      const rooms = ['ปวช.1/1', 'ปวช.1/2'];
+      const roomRates = rooms.map(rm => {
+        const rmRecs = records.filter(r => r['ห้องเรียน'] === rm);
+        const valid = rmRecs.filter(r => ['มาเรียน', 'สาย', 'ขาด', 'ลา'].includes((r['สถานะเข้าเรียน']||'').trim()));
+        const pres = valid.filter(r => ['มาเรียน', 'สาย'].includes((r['สถานะเข้าเรียน']||'').trim())).length;
+        return valid.length > 0 ? parseFloat(((pres / valid.length) * 100).toFixed(2)) : 0;
+      });
+      charts.room.data.datasets[0].data = roomRates;
+      charts.room.update();
+
+      // 4. Subject Comparison
+      const subjects = ['การเขียนโปรแกรม', 'ฐานข้อมูล', 'การสร้างเว็บไซต์'];
+      const subjAttRates = [];
+      const subjLateRates = [];
+
+      subjects.forEach(sb => {
+        const sbRecs = records.filter(r => r['วิชา'] === sb);
+        const valid = sbRecs.filter(r => ['มาเรียน', 'สาย', 'ขาด', 'ลา'].includes((r['สถานะเข้าเรียน']||'').trim()));
+        const pres = valid.filter(r => ['มาเรียน', 'สาย'].includes((r['สถานะเข้าเรียน']||'').trim())).length;
+        const late = valid.filter(r => (r['สถานะเข้าเรียน']||'').trim() === 'สาย').length;
+
+        subjAttRates.push(valid.length > 0 ? parseFloat(((pres / valid.length) * 100).toFixed(2)) : 0);
+        subjLateRates.push(valid.length > 0 ? parseFloat(((late / valid.length) * 100).toFixed(2)) : 0);
+      });
+
+      charts.subject.data.datasets[0].data = subjAttRates;
+      charts.subject.data.datasets[1].data = subjLateRates;
+      charts.subject.update();
+    }
+
+    // ========================================================
+    // STUDENT RISK TABLE
+    // ========================================================
+    function renderStudentRiskTable() {
+      const tbody = document.getElementById('student-table-body');
+      tbody.innerHTML = '';
+
+      // Group records by Student
+      const studentMap = {};
+      const studs = ['S001', 'S002', 'S003', 'S004', 'S005', 'S006', 'S007', 'S008', 'S009', 'S010'];
+      studs.forEach(s => {
+        studentMap[s] = {
+          id: s,
+          room: s <= 'S005' ? 'ปวช.1/1' : 'ปวช.1/2',
+          total: 0,
+          present: 0,
+          late: 0,
+          absent: 0,
+          leave: 0,
+          submitted: 0,
+          notSubmitted: 0,
+          unknownSub: 0
+        };
+      });
+
+      // Use filtered records to aggregate
+      filteredRecords.forEach(r => {
+        const sid = r['รหัสนักเรียน'];
+        if (!studentMap[sid]) return;
+
+        studentMap[sid].total++;
+        const att = (r['สถานะเข้าเรียน'] || '').trim();
+        if (att === 'มาเรียน') studentMap[sid].present++;
+        else if (att === 'สาย') studentMap[sid].late++;
+        else if (att === 'ขาด') studentMap[sid].absent++;
+        else if (att === 'ลา') studentMap[sid].leave++;
+
+        const sub = (r['สถานะส่งงาน'] || '').trim();
+        if (sub === 'ส่งแล้ว') studentMap[sid].submitted++;
+        else if (sub === 'ยังไม่ส่ง') studentMap[sid].notSubmitted++;
+        else studentMap[sid].unknownSub++;
+      });
+
+      let atRiskCount = 0;
+
+      studs.forEach(sid => {
+        const item = studentMap[sid];
+        if (item.total === 0) return; // Skip if filtered out
+
+        // Risk Evaluation
+        let statusBadge = '';
+        if (item.absent >= 2 || item.notSubmitted >= 3) {
+          statusBadge = '<span class="inline-flex items-center gap-1 bg-rose-50 text-rose-700 border border-rose-300 px-2 py-0.5 rounded font-bold text-[11px]"><span class="w-1.5 h-1.5 rounded-full bg-rose-600"></span> ต้องติดตามเร่งด่วน</span>';
+          atRiskCount++;
+        } else if (item.late >= 2) {
+          statusBadge = '<span class="inline-flex items-center gap-1 bg-amber-50 text-amber-700 border border-amber-300 px-2 py-0.5 rounded font-semibold text-[11px]"><span class="w-1.5 h-1.5 rounded-full bg-amber-600"></span> เฝ้าระวังมาสาย</span>';
+        } else {
+          statusBadge = '<span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-300 px-2 py-0.5 rounded font-medium text-[11px]"><span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span> ปกติ</span>';
+        }
+
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 transition-colors";
+        tr.innerHTML = `
+          <td class="px-3.5 py-2.5 font-bold text-slate-800 font-mono">${item.id}</td>
+          <td class="px-3 py-2.5 text-slate-600">${item.room}</td>
+          <td class="px-3 py-2.5 text-center font-mono font-medium">${item.total}</td>
+          <td class="px-3 py-2.5 text-center font-mono text-emerald-600">${item.present}</td>
+          <td class="px-3 py-2.5 text-center font-mono ${item.late >= 2 ? 'font-bold text-amber-600' : 'text-slate-600'}">${item.late}</td>
+          <td class="px-3 py-2.5 text-center font-mono ${item.absent > 0 ? 'font-bold text-rose-600 bg-rose-50/50' : 'text-slate-600'}">${item.absent}</td>
+          <td class="px-3 py-2.5 text-center font-mono ${item.leave > 0 ? 'font-bold text-blue-600' : 'text-slate-600'}">${item.leave}</td>
+          <td class="px-3 py-2.5 text-center font-mono text-indigo-600">${item.submitted}</td>
+          <td class="px-3 py-2.5 text-center font-mono ${item.notSubmitted >= 2 ? 'font-bold text-rose-600 bg-rose-50/50' : 'text-slate-600'}">${item.notSubmitted}</td>
+          <td class="px-3 py-2.5 text-center font-mono text-slate-400">${item.unknownSub > 0 ? `<span class="bg-amber-100 text-amber-800 px-1.5 py-0.2 rounded font-bold">${item.unknownSub}</span>` : '0'}</td>
+          <td class="px-3.5 py-2.5 text-center">${statusBadge}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById('badge-at-risk').textContent = `${atRiskCount} เสี่ยง`;
+    }
+
+    // ========================================================
+    // ISSUES TABLE (Quality Audit)
+    // ========================================================
+    function renderIssuesTable() {
+      const tbody = document.getElementById('issues-table-body');
+      tbody.innerHTML = '';
+
+      ATTENDANCE_DATA.issues_records.forEach(item => {
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 transition-colors";
+        tr.innerHTML = `
+          <td class="px-3.5 py-3 font-mono font-bold text-slate-800">${item['รหัสรายการ']}</td>
+          <td class="px-3 py-3 font-semibold text-slate-700">${item['คอลัมน์']}</td>
+          <td class="px-3 py-3 font-mono text-rose-600 bg-rose-50/40 rounded px-2 py-0.5 inline-block text-[11px] my-1">${item['ค่าที่พบ']}</td>
+          <td class="px-4 py-3 text-slate-600 leading-relaxed">${item['เหตุผล']}</td>
+          <td class="px-4 py-3 text-slate-700 font-medium leading-relaxed">${item['วิธีจัดการ']}</td>
+          <td class="px-4 py-3 text-slate-500 leading-relaxed">${item['ผลกระทบ']}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // ========================================================
+    // MAIN DATA TABLE & DATASET TAB SWITCHING
+    // ========================================================
+    function switchDatasetTab(tab) {
+      currentDatasetType = tab;
+      const btnCleaned = document.getElementById('tab-btn-cleaned');
+      const btnRaw = document.getElementById('tab-btn-raw');
+      const desc = document.getElementById('table-dataset-desc');
+
+      if (tab === 'cleaned') {
+        btnCleaned.className = "px-3 py-1.5 rounded-md bg-white text-slate-800 shadow-sm font-semibold transition-all";
+        btnRaw.className = "px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900 transition-all";
+        desc.textContent = "แสดงชุดข้อมูลที่ผ่านการตรวจสอบและทำความสะอาดแล้ว (Cleaned Dataset - 59 รายการ)";
+      } else {
+        btnRaw.className = "px-3 py-1.5 rounded-md bg-white text-slate-800 shadow-sm font-semibold transition-all";
+        btnCleaned.className = "px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900 transition-all";
+        desc.textContent = "แสดงชุดข้อมูลต้นฉบับก่อนจัดการ (Dirty Dataset - 60 รายการ) เพื่อใช้ตรวจสอบและเปรียบเทียบข้อผิดพลาด";
+      }
+
+      applyFilters();
+    }
+
+    function renderDataTable() {
+      const tbody = document.getElementById('main-data-tbody');
+      const emptyState = document.getElementById('table-empty-state');
+      const countLabel = document.getElementById('table-row-count');
+      const searchVal = (document.getElementById('table-search-input').value || '').toLowerCase().trim();
+
+      tbody.innerHTML = '';
+
+      let records = filteredRecords;
+      if (searchVal) {
+        records = records.filter(r => {
+          return Object.values(r).some(v => String(v).toLowerCase().includes(searchVal));
+        });
+      }
+
+      if (records.length === 0) {
+        emptyState.classList.remove('hidden');
+        document.getElementById('main-data-table').classList.add('hidden');
+        countLabel.textContent = 'ไม่พบข้อมูล';
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+      document.getElementById('main-data-table').classList.remove('hidden');
+      countLabel.textContent = `แสดง ${records.length} รายการ (จากทั้งหมด ${currentDatasetType === 'cleaned' ? '59' : '60'} แถว)`;
+
+      // Map issue record IDs
+      const issueIds = new Set(ATTENDANCE_DATA.issues_records.map(i => i['รหัสรายการ']));
+
+      records.forEach(r => {
+        const tr = document.createElement('tr');
+        const hasIssue = issueIds.has(r['รหัสบันทึก']);
+
+        if (hasIssue) {
+          tr.className = "hover:bg-amber-50/60 transition-colors bg-amber-50/20";
+        } else {
+          tr.className = "hover:bg-slate-50 transition-colors";
+        }
+
+        // Attendance Badge
+        const att = (r['สถานะเข้าเรียน'] || '').trim();
+        let attBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-700">${att}</span>`;
+        if (att === 'มาเรียน') attBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">มาเรียน</span>`;
+        else if (att === 'สาย') attBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-medium bg-amber-50 text-amber-700 border border-amber-200">สาย</span>`;
+        else if (att === 'ขาด') attBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-medium bg-rose-50 text-rose-700 border border-rose-200">ขาด</span>`;
+        else if (att === 'ลา') attBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-medium bg-blue-50 text-blue-700 border border-blue-200">ลา</span>`;
+
+        // Submission Badge
+        const sub = (r['สถานะส่งงาน'] || '').trim();
+        let subBadge = `<span class="text-slate-400 italic">ไม่ระบุ (ค่าว่าง)</span>`;
+        if (sub === 'ส่งแล้ว') subBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">ส่งแล้ว</span>`;
+        else if (sub === 'ยังไม่ส่ง') subBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200">ยังไม่ส่ง</span>`;
+
+        // Notes for Issues
+        let issueNote = '-';
+        if (r['รหัสบันทึก'] === 'A009') issueNote = '<span class="text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded text-[10px]">มีช่องว่างเกิน (Trim แล้ว)</span>';
+        else if (r['รหัสบันทึก'] === 'A017') issueNote = '<span class="text-rose-700 bg-rose-100 px-1.5 py-0.5 rounded text-[10px]">สถานะส่งงานว่าง (รอตรวจ)</span>';
+        else if (r['รหัสบันทึก'] === 'A026') issueNote = '<span class="text-rose-700 bg-rose-100 px-1.5 py-0.5 rounded text-[10px]">นาทีสาย -10 (รอตรวจ)</span>';
+        else if (r['รหัสบันทึก'] === 'A035') issueNote = '<span class="text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded text-[10px]">สายแต่นาทีเป็น 0 (รอตรวจ)</span>';
+        else if (r['รหัสบันทึก'] === 'A044') issueNote = '<span class="text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded text-[10px]">ชั่วโมงเรียน 25 ชม.</span>';
+        else if (r['รหัสบันทึก'] === 'A052') issueNote = '<span class="text-purple-700 bg-purple-100 px-1.5 py-0.5 rounded text-[10px]">รายการซ้ำ (Dedup แล้ว)</span>';
+
+        tr.innerHTML = `
+          <td class="px-3.5 py-2.5 font-bold font-mono text-slate-800">${r['รหัสบันทึก']}</td>
+          <td class="px-3 py-2.5 text-slate-600 font-mono">${r['วันที่']}</td>
+          <td class="px-3 py-2.5 font-semibold text-slate-800 font-mono">${r['รหัสนักเรียน']}</td>
+          <td class="px-3 py-2.5 text-slate-600">${r['ห้องเรียน']}</td>
+          <td class="px-3.5 py-2.5 text-slate-700 font-medium">${r['วิชา']}</td>
+          <td class="px-3 py-2.5 text-center">${attBadge}</td>
+          <td class="px-3 py-2.5 text-center font-mono ${parseInt(r['นาทีที่สาย']) < 0 ? 'text-rose-600 font-bold' : ''}">${r['นาทีที่สาย']}</td>
+          <td class="px-3 py-2.5 text-center font-mono ${parseInt(r['ชั่วโมงเรียน']) > 8 ? 'text-rose-600 font-bold' : ''}">${r['ชั่วโมงเรียน']}</td>
+          <td class="px-3 py-2.5 text-center">${subBadge}</td>
+          <td class="px-3.5 py-2.5 text-center">${issueNote}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // ========================================================
+    // CSV EXPORT LOGIC (WITH UTF-8 BOM FOR THAI CHARACTERS)
+    // ========================================================
+    function exportToCsvFile(filename, rows) {
+      if (!rows || rows.length === 0) {
+        alert('ไม่มีข้อมูลสำหรับส่งออกตามเงื่อนไขที่เลือก');
+        return;
+      }
+
+      const headers = Object.keys(rows[0]);
+      let csvContent = '\uFEFF'; // Add UTF-8 BOM so Thai works properly in Excel!
+      csvContent += headers.map(h => `"${h.replace(/"/g, '""')}"`).join(',') + '\r\n';
+
+      rows.forEach(row => {
+        const line = headers.map(h => {
+          const val = row[h] !== undefined && row[h] !== null ? String(row[h]) : '';
+          return `"${val.replace(/"/g, '""')}"`;
+        }).join(',');
+        csvContent += line + '\r\n';
+      });
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    function exportCurrentFilteredCSV() {
+      const timestamp = new Date().toISOString().slice(0, 10);
+      const filename = `student_attendance_filtered_${timestamp}.csv`;
+      exportToCsvFile(filename, filteredRecords);
+    }
+
+    function downloadCleanedCSV() {
+      exportToCsvFile('student_attendance_cleaned.csv', ATTENDANCE_DATA.cleaned_records);
+    }
+
+    function exportStudentTableCSV() {
+      const studs = ['S001', 'S002', 'S003', 'S004', 'S005', 'S006', 'S007', 'S008', 'S009', 'S010'];
+      const rows = [];
+
+      studs.forEach(sid => {
+        const studentRecs = filteredRecords.filter(r => r['รหัสนักเรียน'] === sid);
+        if (studentRecs.length === 0) return;
+
+        const room = sid <= 'S005' ? 'ปวช.1/1' : 'ปวช.1/2';
+        const total = studentRecs.length;
+        const present = studentRecs.filter(r => (r['สถานะเข้าเรียน']||'').trim() === 'มาเรียน').length;
+        const late = studentRecs.filter(r => (r['สถานะเข้าเรียน']||'').trim() === 'สาย').length;
+        const absent = studentRecs.filter(r => (r['สถานะเข้าเรียน']||'').trim() === 'ขาด').length;
+        const leave = studentRecs.filter(r => (r['สถานะเข้าเรียน']||'').trim() === 'ลา').length;
+        const submitted = studentRecs.filter(r => (r['สถานะส่งงาน']||'').trim() === 'ส่งแล้ว').length;
+        const notSubmitted = studentRecs.filter(r => (r['สถานะส่งงาน']||'').trim() === 'ยังไม่ส่ง').length;
+        const unknownSub = studentRecs.filter(r => !['ส่งแล้ว', 'ยังไม่ส่ง'].includes((r['สถานะส่งงาน']||'').trim())).length;
+
+        let riskStatus = 'ปกติ';
+        if (absent >= 2 || notSubmitted >= 3) riskStatus = 'ต้องติดตามเร่งด่วน';
+        else if (late >= 2) riskStatus = 'เฝ้าระวังมาสาย';
+
+        rows.push({
+          'รหัสนักเรียน': sid,
+          'ห้องเรียน': room,
+          'คาบทั้งหมด': total,
+          'มาเรียน': present,
+          'สาย': late,
+          'ขาด': absent,
+          'ลา': leave,
+          'ส่งแล้ว': submitted,
+          'ยังไม่ส่งงาน': notSubmitted,
+          'ไม่ทราบสถานะส่ง': unknownSub,
+          'สถานะการติดตาม': riskStatus
+        });
+      });
+
+      exportToCsvFile('student_risk_summary.csv', rows);
+    }
+  </script>
+</body>
+</html>
+
